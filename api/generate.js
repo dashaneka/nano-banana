@@ -19,8 +19,8 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: 'Missing prompt or image data.' });
         }
         
-        // The official Google Generative Language API endpoint
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent?key=${apiKey}`;
+        // CORRECTED: Use the model specifically for image generation tasks
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
 
         // The payload to send to Google's API
         const payload = {
@@ -30,8 +30,9 @@ export default async function handler(req, res) {
                     { inlineData: { mimeType: "image/png", data: base64ImageData } }
                 ]
             }],
-             generationConfig: {
-                "responseMimeType": "image/png",
+            // CORRECTED: Use responseModalities to request an image output, not responseMimeType
+            generationConfig: {
+                "responseModalities": ["IMAGE"],
             }
         };
 
