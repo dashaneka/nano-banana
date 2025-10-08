@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nano Banana Image Editor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Pacifico&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            /* Banana SVG for background pattern, URL-encoded */
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cg fill-rule='evenodd'%3E%3Cg fill='%23fbbf24' fill-opacity='0.1'%3E%3Cpath d='M0 38.59l2.83-2.83 1.41 1.41L1.41 40H0v-1.41zM0 1.4l2.83 2.83 1.41-1.41L1.41 0H0v1.41zM38.59 40l-2.83-2.83 1.41-1.41L40 38.59V40h-1.41zM40 1.41l-2.83 2.83-1.41-1.41L38.59 0H40v1.41zM20 18.6l2.83-2.83 1.41 1.41L21.41 20l2.83 2.83-1.41 1.41L20 21.41l-2.83 2.83-1.41-1.41L18.59 20l-2.83-2.83 1.41-1.41L20 18.59z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+        .pacifico-font {
+            font-family: 'Pacifico', cursive;
+        }
+        #loadingText {
+            transition: opacity 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-yellow-50 to-amber-100 min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-4xl mx-auto bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl p-6 sm:p-8">
+        
+        <!-- Header -->
+        <header class="text-center mb-6">
+            <h1 class="pacifico-font text-4xl sm:text-5xl font-bold text-amber-600">
+                Nano Banana Editor
+            </h1>
+            <p class="text-gray-600 mt-2">Upload a photo, describe your edit, and let the magic happen!</p>
+        </header>
+
+        <main>
+            <!-- Input Section -->
+            <div class="flex flex-col md:flex-row gap-6 mb-6">
+                <!-- File Upload & Prompt -->
+                <div class="flex-1 space-y-4">
+                    <div>
+                        <label for="file-upload" class="block text-sm font-medium text-gray-700 mb-1">1. Upload Image</label>
+                        <label for="imageUpload" class="group relative flex justify-center w-full h-32 px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer hover:border-yellow-400 transition-colors">
+                            <div class="space-y-1 text-center">
+                                <svg class="mx-auto h-12 w-12 text-gray-400 group-hover:text-yellow-500" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                                    <path d="M28 8H12a4 40 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                                <div class="flex text-sm text-gray-600">
+                                    <p class="pl-1">Click to upload or drag and drop</p>
+                                </div>
+                                <p class="text-xs text-gray-500">PNG, JPG, WEBP</p>
+                            </div>
+                            <input id="imageUpload" name="imageUpload" type="file" class="sr-only" accept="image/png, image/jpeg, image/webp">
+                        </label>
+                    </div>
+                    <div>
+                        <label for="prompt" class="block text-sm font-medium text-gray-700">2. Describe Your Edit</label>
+                        <div class="mt-1">
+                            <textarea id="prompt" name="prompt" rows="3" class="shadow-sm focus:ring-yellow-500 focus:border-yellow-500 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md p-2 placeholder-gray-400" placeholder="e.g., make it a watercolor painting, add a superhero cape, change the background to a beach"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Action Button -->
+            <div class="text-center mb-6">
+                <button id="editButton" class="w-full sm:w-auto inline-flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-full shadow-lg text-white bg-yellow-500 hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-transform transform hover:scale-105 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:scale-100">
+                    Go Bananas!
+                </button>
+            </div>
+
+            <!-- Image Previews & Results -->
+            <div id="resultContainer" class="hidden">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                    <!-- Original Image -->
+                    <div class="w-full">
+                        <h3 class="text-lg font-semibold text-gray-700 mb-2 text-center">Original</h3>
+                        <div class="aspect-w-1 aspect-h-1 bg-gray-100 rounded-lg overflow-hidden shadow-md">
+                             <img id="originalImage" src="" alt="Original" class="w-full h-full object-contain">
+                        </div>
+                    </div>
+                    <!-- Edited Image -->
+                    <div class="w-full">
+                        <h3 class="text-lg font-semibold text-gray-700 mb-2 text-center">Edited</h3>
+                        <div id="imageContainer" class="relative aspect-w-1 aspect-h-1 bg-gray-100 rounded-lg overflow-hidden shadow-md">
+                             <div id="loader" class="absolute inset-0 flex-col gap-4 flex items-center justify-center bg-white/80 backdrop-blur-sm">
+                                <!-- UPDATED: Swapped progress ring for a spinning circular loader -->
+                                <svg class="animate-spin h-20 w-20 text-yellow-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                  </svg>
+                                <span id="loadingText" class="text-amber-700 font-semibold text-center px-4"></span>
+                            </div>
+                            <img id="editedImage" src="" alt="Edited" class="hidden w-full h-full object-contain">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Download Button -->
+                <div class="mt-8 text-center">
+                    <button id="downloadButton" class="hidden w-full sm:w-auto inline-flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-full shadow-lg text-white bg-green-500 hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-transform transform hover:scale-105">
+                        Download Image
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Error Message Box -->
+            <div id="errorBox" class="hidden mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg" role="alert">
+                <strong class="font-bold">Oops!</strong>
+                <span id="errorMessage" class="block sm:inline">Something went wrong.</span>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        // DOM Elements
+        const imageUpload = document.getElementById('imageUpload');
+        const promptInput = document.getElementById('prompt');
+        const editButton = document.getElementById('editButton');
+        const originalImage = document.getElementById('originalImage');
+        const editedImage = document.getElementById('editedImage');
+        const resultContainer = document.getElementById('resultContainer');
+        const loader = document.getElementById('loader');
+        const downloadButton = document.getElementById('downloadButton');
+        const errorBox = document.getElementById('errorBox');
+        const errorMessage = document.getElementById('errorMessage');
+
+        // Animation Elements
+        const loadingText = document.getElementById('loadingText');
+        const wittyTexts = ["Peeling back the pixels...", "Going bananas...", "Adding some a-peel...", "Getting creative...", "Almost ripe...", "Perfecting the bunch..."];
+        let uploadedImageBase64 = null;
+        let textInterval;
+
+        // Event Listeners
+        imageUpload.addEventListener('change', handleImageUpload);
+        editButton.addEventListener('click', handleEditClick);
+        downloadButton.addEventListener('click', handleDownload);
+
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const imageUrl = e.target.result;
+                    originalImage.src = imageUrl;
+                    resultContainer.classList.remove('hidden');
+                    editedImage.classList.add('hidden');
+                    downloadButton.classList.add('hidden');
+                    loader.classList.add('hidden');
+                    uploadedImageBase64 = imageUrl.split(',')[1];
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        async function handleEditClick() {
+            const userPrompt = promptInput.value.trim();
+            if (!uploadedImageBase64) {
+                showError("Please upload an image first.");
+                return;
+            }
+            if (!userPrompt) {
+                showError("Please describe how you want to edit the image.");
+                return;
+            }
+
+            hideError();
+            editedImage.classList.add('hidden');
+            downloadButton.classList.add('hidden');
+            loader.classList.remove('hidden');
+            
+            startLoadingAnimation();
+            await generateImage(userPrompt, uploadedImageBase64);
+        }
+        
+        function generateFilename() {
+            const chars = 'abcdefghijklmnopqrstuvwxyz';
+            let randomChars = '';
+            for (let i = 0; i < 3; i++) {
+                randomChars += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return `rjbanana${randomChars}.png`;
+        }
+
+        function handleDownload() {
+            const link = document.createElement('a');
+            link.href = editedImage.src;
+            link.download = generateFilename();
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // --- Loading Animation ---
+        function startLoadingAnimation() {
+            clearInterval(textInterval);
+            
+            // Animate witty text
+            let textIndex = 0;
+            loadingText.style.opacity = '1';
+            loadingText.textContent = wittyTexts[textIndex];
+            textInterval = setInterval(() => {
+                textIndex = (textIndex + 1) % wittyTexts.length;
+                loadingText.style.opacity = '0';
+                setTimeout(() => {
+                    loadingText.textContent = wittyTexts[textIndex];
+                    loadingText.style.opacity = '1';
+                }, 500);
+            }, 2000);
+        }
+
+        function stopLoadingAnimation() {
+            clearInterval(textInterval);
+            // Hide loader after a short delay for a smoother transition
+            setTimeout(() => loader.classList.add('hidden'), 500);
+        }
+
+        // --- Image Generation ---
+        async function generateImage(prompt, base64ImageData) {
+            const apiKey = ""; // Remember to add your API key here
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
+
+            const payload = {
+                contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: "image/png", data: base64ImageData } }] }],
+                generationConfig: { responseModalities: ['IMAGE'] },
+            };
+
+            try {
+                const response = await fetchWithRetry(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error?.message || `HTTP error! status: ${response.status}`);
+                }
+                const result = await response.json();
+                const base64Data = result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
+                if (!base64Data) throw new Error("No image data found in the API response.");
+                
+                const imageUrl = `data:image/png;base64,${base64Data}`;
+                editedImage.src = imageUrl;
+                editedImage.classList.remove('hidden');
+                downloadButton.classList.remove('hidden');
+
+            } catch (error) {
+                console.error('Error generating image:', error);
+                showError(error.message || "Failed to generate the image. Please try again.");
+            } finally {
+                stopLoadingAnimation();
+            }
+        }
+        
+        async function fetchWithRetry(url, options, retries = 3, delay = 1000) {
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const response = await fetch(url, options);
+                    if (response.status === 429 || response.status >= 500) {
+                       throw new Error(`Server error: ${response.status}`);
+                    }
+                    return response;
+                } catch (error) {
+                    if (i === retries - 1) throw error;
+                    await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, i)));
+                }
+            }
+        }
+        
+        // --- Error Handling ---
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorBox.classList.remove('hidden');
+        }
+
+        function hideError() {
+            errorBox.classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
